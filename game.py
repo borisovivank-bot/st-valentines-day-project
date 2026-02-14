@@ -6,18 +6,97 @@ class ValentineGame:
     def __init__(self, root):
         self.root = root
         self.root.title("St. Valentine's Day Matching Game 💘")
-        self.root.geometry("600x500")
+        self.root.geometry("800x600")
         self.root.configure(bg="#ffebee")  # Light pink background
 
-        self.matches = {
-            "Сердце": "❤️",
-            "Купидон": "👼",
-            "Роза": "🌹",
-            "Письмо": "💌",
-            "Кольцо": "💍",
-            "Шоколад": "🍫"
+        # Core game data - Riddles and Emojis
+        self.matches_data = {
+            "Бьётся в груди,\nлюбви вечный знак": "❤️",
+            "С крыльями мальчик,\nстрелок он лихой": "👼",
+            "Пахнет чудесно,\nно с острой шипой": "🌹",
+            "В почту летит,\nсекреты хранит": "💌",
+            "Круг золотой\nна пальце блестит": "💍",
+            "Сладкая плитка,\nна лицах улыбка": "🍫"
         }
 
+        self.show_menu()
+
+    def show_menu(self):
+        # Clear current window
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        menu_frame = tk.Frame(self.root, bg="#ffebee")
+        menu_frame.pack(expand=True, fill="both")
+
+        # Splash Screen Title
+        title = tk.Label(
+            menu_frame, 
+            text="С Днем\nСвятого Валентина! 💖", 
+            font=("Helvetica", 28, "bold"), 
+            bg="#ffebee", 
+            fg="#d81b60",
+            pady=20
+        )
+        title.pack()
+
+        # Try to load and display the image
+        try:
+            self.photo = tk.PhotoImage(file="image-for-st-valentines.png")
+            # Calculate factor to maintain aspect ratio
+            width_factor = self.photo.width() // 300
+            height_factor = self.photo.height() // 300
+            factor = max(width_factor, height_factor)
+            
+            if factor > 1:
+                self.photo = self.photo.subsample(factor, factor)
+            
+            img_label = tk.Label(menu_frame, image=self.photo, bg="#ffebee")
+            img_label.image = self.photo # Keep reference
+            img_label.pack(pady=10)
+        except Exception:
+            # If image fails to load, just show the subtitle
+            subtitle = tk.Label(
+                menu_frame,
+                text="Найди все пары и получи признание! 💘",
+                font=("Helvetica", 14, "italic"),
+                bg="#ffebee",
+                fg="#ad1457"
+            )
+            subtitle.pack(pady=10)
+
+        # Start Button
+        start_btn = tk.Button(
+            menu_frame,
+            text="START GAME",
+            font=("Helvetica", 18, "bold"),
+            bg="#d81b60",
+            fg="white",
+            activebackground="#f06292",
+            activeforeground="white",
+            padx=40,
+            pady=15,
+            bd=0,
+            cursor="heart",
+            command=self.start_game
+        )
+        start_btn.pack(pady=30)
+
+        # Decoration Label
+        tk.Label(
+            menu_frame,
+            text="❤️ 🌹 🎁 💌 🧸",
+            font=("Helvetica", 24),
+            bg="#ffebee"
+        ).pack(side="bottom", pady=20)
+
+    def start_game(self):
+        # Reset current window
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        # Initialize game state
+        self.matches = self.matches_data.copy()
         self.names = list(self.matches.keys())
         self.emojis = list(self.matches.values())
         
@@ -55,10 +134,12 @@ class ValentineGame:
             btn = tk.Button(
                 names_frame, 
                 text=name, 
-                font=("Helvetica", 12),
-                width=15,
+                font=("Helvetica", 11),
+                width=22,
+                height=3,
                 bg="#fce4ec",
                 activebackground="#f8bbd0",
+                justify="center",
                 command=lambda n=name: self.on_name_click(n)
             )
             btn.pack(pady=10)
@@ -72,31 +153,49 @@ class ValentineGame:
             btn = tk.Button(
                 emojis_frame, 
                 text=emoji, 
-                font=("Helvetica", 20),
-                width=5,
+                font=("Helvetica", 24),
+                width=4,
+                height=1,
                 bg="#fce4ec",
                 activebackground="#f8bbd0",
                 command=lambda e=emoji: self.on_emoji_click(e)
             )
-            btn.pack(pady=5)
+            btn.pack(pady=10)
             self.emoji_buttons[emoji] = btn
+
+        # Back to menu button
+        back_btn = tk.Button(
+            self.root,
+            text="← В меню",
+            font=("Helvetica", 10),
+            bg="#ffebee",
+            fg="#d81b60",
+            bd=0,
+            cursor="hand2",
+            command=self.show_menu
+        )
+        back_btn.pack(side="bottom", pady=10)
 
     def on_name_click(self, name):
         # Reset previous selection colors
         if self.selected_name:
-            self.name_buttons[self.selected_name].configure(bg="#fce4ec")
+            if self.selected_name in self.name_buttons:
+                self.name_buttons[self.selected_name].configure(bg="#fce4ec")
         
         self.selected_name = name
-        self.name_buttons[name].configure(bg="#f06292")
+        if name in self.name_buttons:
+            self.name_buttons[name].configure(bg="#f06292")
         self.check_match()
 
     def on_emoji_click(self, emoji):
         # Reset previous selection colors
         if self.selected_emoji:
-            self.emoji_buttons[self.selected_emoji].configure(bg="#fce4ec")
+            if self.selected_emoji in self.emoji_buttons:
+                self.emoji_buttons[self.selected_emoji].configure(bg="#fce4ec")
 
         self.selected_emoji = emoji
-        self.emoji_buttons[emoji].configure(bg="#f06292")
+        if emoji in self.emoji_buttons:
+            self.emoji_buttons[emoji].configure(bg="#f06292")
         self.check_match()
 
     def check_match(self):
@@ -114,10 +213,10 @@ class ValentineGame:
 
                 if not self.name_buttons:
                     messagebox.showinfo("Победа!", "Все пары найдены! С Днем Святого Валентина! 💝")
-                    self.root.destroy()
+                    self.show_menu() # Back to menu after win
             else:
-                # No match - we wait for the next click to reset or highlight error
-                # For simplicity, just let them keep trying.
+                # No match - we wait for the next click or just reset after a delay (optional)
+                # For now, let's keep it simple as before.
                 pass
 
 if __name__ == "__main__":
